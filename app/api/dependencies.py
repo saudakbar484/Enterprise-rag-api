@@ -1,3 +1,4 @@
+import bcrypt
 from fastapi import Header, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
@@ -8,12 +9,14 @@ async def get_current_tenant(
     x_tenant_api_key: str = Header(...),
     session: AsyncSession = Depends(get_session)
 ) -> Tenant:
-    result = await session.execute(
-        select(Tenant).where(Tenant.api_key == x_tenant_api_key)
-    )
-    tenant = result.scalars().first()
+    result = await session.execute(select(Tenant))
+    tenants = result.scalars().all()
 
-    if not tenant:
-        raise HTTPException(status_code=403, detail="Invalid or missing API key")
+    for tenant in tenants:
+        try:
+            if bcrypt.checkpw(x_tenant_api_key.encode(), tenant.api_key.encode()):
+                return tenant
+        except Exception:
+            continue
 
-    return tenant
+    raise HTTPException(status_code=403, detail="Invalid or missing API key")

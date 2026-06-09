@@ -3,7 +3,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.core.config import settings
 from app.core.database import init_db
-from app.api.routes import router
+from app.api.routes import router as health_router
+from app.api.v1.tenants import router as tenants_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -11,7 +12,8 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
-app.include_router(router, prefix="/api/v1")
+app.include_router(health_router, prefix="/api/v1")
+app.include_router(tenants_router, prefix="/api/v1/tenants")
 
 @app.get("/health")
 async def health():
