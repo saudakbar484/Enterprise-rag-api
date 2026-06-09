@@ -1,17 +1,38 @@
 import uvicorn
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.exceptions import HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 from app.core.config import settings
 from app.core.database import init_db
+from app.core.logging import logger
+from app.core.exceptions import (
+    http_exception_handler,
+    sqlalchemy_exception_handler,
+    global_exception_handler
+)
+from app.core.middleware import LoggingMiddleware
 from app.api.routes import router as health_router
 from app.api.v1.tenants import router as tenants_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    logger.info("startup", extra={"app": settings.app_name})
     await init_db()
     yield
+    logger.info("shutdown", extra={"app": settings.app_name})
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
+
+# Middleware
+app.add_middleware(LoggingMiddleware)
+
+# Exception handlers
+app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(SQLAlchemyError, sqlalchemy_exception_handler)
+app.add_exception_handler(Exception, global_exception_handler)
+
+# Routes
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(tenants_router, prefix="/api/v1/tenants")
 

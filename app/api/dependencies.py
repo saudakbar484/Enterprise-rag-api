@@ -3,6 +3,7 @@ from fastapi import Header, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 from app.core.database import get_session
+from app.core.logging import logger
 from app.models.tenant import Tenant
 
 async def get_current_tenant(
@@ -15,6 +16,7 @@ async def get_current_tenant(
     for tenant in tenants:
         try:
             if bcrypt.checkpw(x_tenant_api_key.encode(), tenant.api_key.encode()):
+                logger.info("tenant_authenticated", extra={"tenant_id": tenant.id})
                 return tenant
         except Exception:
             continue
