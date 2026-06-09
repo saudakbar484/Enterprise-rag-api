@@ -1,2 +1,8 @@
 node_modules/
 .env
+test.db
+__pycache__/
+*.pyc
+.pytest_cache/
+
+test_integration.db
