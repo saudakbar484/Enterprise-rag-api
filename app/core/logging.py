@@ -1,6 +1,6 @@
 import logging
 import sys
-from pythonjsonlogger import jsonlogger
+from pythonjsonlogger import json as jsonlogger  # changed
 
 def setup_logging():
     logger = logging.getLogger("enterprise_rag")
