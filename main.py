@@ -1,8 +1,16 @@
 import uvicorn
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.core.config import settings
+from app.core.database import init_db
 
-app = FastAPI(title=settings.app_name)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()       # runs on startup
+    yield           # app runs here
+                    # anything after yield runs on shutdown
+
+app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
 @app.get("/health")
 async def health():
