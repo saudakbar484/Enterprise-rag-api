@@ -6,6 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.core.config import settings
 from app.core.database import init_db
 from app.core.vector_store import init_vector_store
+from app.api.v1.documents import router as documents_router
 from app.core.logging import logger
 from app.core.exceptions import (
     http_exception_handler,
@@ -37,6 +38,7 @@ app.add_exception_handler(Exception, global_exception_handler)
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(tenants_router, prefix="/api/v1/tenants")
 
+app.include_router(documents_router, prefix="/api/v1/documents")
 
 @app.get("/health")
 async def health():
