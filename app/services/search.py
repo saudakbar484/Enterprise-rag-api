@@ -1,8 +1,11 @@
-from qdrant_client.models import Filter, FieldCondition, MatchValue, QueryRequest
+from qdrant_client.models import Filter, FieldCondition, MatchValue
 from app.core.vector_store import client, COLLECTION_NAME
 from app.services.embedder import embed_texts
+from app.services.reranker import rerank
 from app.core.logging import logger
 from dataclasses import dataclass
+
+RETRIEVAL_LIMIT = 15  # fetch more, rerank down
 
 
 @dataclass
@@ -33,23 +36,24 @@ def search_tenant_vectors(
         ]
     )
 
-    # Step 3 — search Qdrant
+    # Step 3 — fetch top 15 from Qdrant
     logger.info("vector_search", extra={
         "tenant_id": tenant_id,
         "query": query[:50],
-        "limit": limit,
+        "retrieval_limit": RETRIEVAL_LIMIT,
+        "final_limit": limit,
     })
 
     response = client.query_points(
         collection_name=COLLECTION_NAME,
         query=query_vector,
         query_filter=tenant_filter,
-        limit=limit,
+        limit=RETRIEVAL_LIMIT,
         with_payload=True,
     )
 
     # Step 4 — map to SearchResult
-    return [
+    results = [
         SearchResult(
             chunk_index=r.payload.get("chunk_index", 0),
             text=r.payload.get("text", ""),
@@ -59,3 +63,6 @@ def search_tenant_vectors(
         )
         for r in response.points
     ]
+
+    # Step 5 — rerank and return top `limit`
+    return rerank(query, results, top_k=limit)
