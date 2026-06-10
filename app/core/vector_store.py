@@ -10,7 +10,7 @@ from app.core.logging import logger
 COLLECTION_NAME = "tenant_documents"
 VECTOR_SIZE = 384  # all-MiniLM-L6-v2 output size
 
-client = QdrantClient(url=settings.qdrant_url)
+client = QdrantClient(url=settings.qdrant_url, timeout=60)
 
 
 def init_vector_store():
