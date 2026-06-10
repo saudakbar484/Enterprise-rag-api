@@ -12,5 +12,7 @@ celery_app.conf.update(
     task_serializer="json",
     result_serializer="json",
     accept_content=["json"],
-    task_track_started=True,
+    task_track_started=True,        # tracks STARTED state
+    result_extended=True,           # stores task name, args, kwargs in result
+    result_expires=3600,            # results expire after 1 hour
 )

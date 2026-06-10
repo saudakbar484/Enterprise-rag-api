@@ -10,20 +10,36 @@ from qdrant_client.models import PointStruct
 @celery_app.task(bind=True, name="ingest_document")
 def ingest_document(self, text: str, doc_filename: str, tenant_id: str):
     try:
+        # Stage 1
+        self.update_state(state="PROGRESS", meta={
+            "stage": "chunking",
+            "progress": 10,
+            "doc_filename": doc_filename,
+        })
         logger.info("ingest_started", extra={
             "task_id": self.request.id,
             "tenant_id": tenant_id,
             "doc_filename": doc_filename,
         })
-
-        # Step 1 — chunk
         chunks = chunk_text(text)
 
-        # Step 2 — embed
+        # Stage 2
+        self.update_state(state="PROGRESS", meta={
+            "stage": "embedding",
+            "progress": 40,
+            "chunks": len(chunks),
+            "doc_filename": doc_filename,
+        })
         texts = [chunk.text for chunk in chunks]
         embeddings = embed_texts(texts)
 
-        # Step 3 — build points
+        # Stage 3
+        self.update_state(state="PROGRESS", meta={
+            "stage": "storing",
+            "progress": 80,
+            "chunks": len(chunks),
+            "doc_filename": doc_filename,
+        })
         points = [
             PointStruct(
                 id=str(uuid.uuid4()),
@@ -38,8 +54,6 @@ def ingest_document(self, text: str, doc_filename: str, tenant_id: str):
             )
             for i, chunk in enumerate(chunks)
         ]
-
-        # Step 4 — upsert to Qdrant
         client.upsert(collection_name=COLLECTION_NAME, points=points)
 
         logger.info("ingest_complete", extra={
@@ -51,8 +65,11 @@ def ingest_document(self, text: str, doc_filename: str, tenant_id: str):
 
         return {
             "status": "complete",
+            "stage": "done",
+            "progress": 100,
             "chunks": len(chunks),
             "points_stored": len(points),
+            "doc_filename": doc_filename,
         }
 
     except Exception as e:
