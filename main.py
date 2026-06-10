@@ -1,6 +1,7 @@
 import uvicorn
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from app.api.v1.search import router as search_router
 from fastapi.exceptions import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from app.core.config import settings
@@ -38,7 +39,7 @@ app.add_exception_handler(Exception, global_exception_handler)
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(tenants_router, prefix="/api/v1/tenants")
 app.include_router(documents_router, prefix="/api/v1/documents")
-
+app.include_router(search_router, prefix="/api/v1/search")
 
 @app.get("/health")
 async def health():
