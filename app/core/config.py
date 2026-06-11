@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     admin_secret: str
     qdrant_url: str
     redis_url: str
+    openai_api_key: str
+    llm_model: str = "gpt-3.5-turbo"
 
     model_config = {"env_file": ".env"}
 
