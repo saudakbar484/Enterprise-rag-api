@@ -1,7 +1,6 @@
 import uvicorn
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from app.api.v1.search import router as search_router
 from fastapi.exceptions import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from app.core.config import settings
@@ -17,6 +16,8 @@ from app.core.middleware import LoggingMiddleware
 from app.api.routes import router as health_router
 from app.api.v1.tenants import router as tenants_router
 from app.api.v1.documents import router as documents_router
+from app.api.v1.search import router as search_router
+from app.api.v1.chat import router as chat_router
 
 
 @asynccontextmanager
@@ -40,6 +41,8 @@ app.include_router(health_router, prefix="/api/v1")
 app.include_router(tenants_router, prefix="/api/v1/tenants")
 app.include_router(documents_router, prefix="/api/v1/documents")
 app.include_router(search_router, prefix="/api/v1/search")
+app.include_router(chat_router, prefix="/api/v1/chat")
+
 
 @app.get("/health")
 async def health():
