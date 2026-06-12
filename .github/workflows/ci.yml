@@ -1,0 +1,90 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Run Test Suite
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: enterprise_rag_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      qdrant:
+        image: qdrant/qdrant
+        ports:
+          - 6333:6333
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: requirements-docker.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-docker.txt
+
+      - name: Create .env for tests
+        run: |
+          cat > .env << EOF
+          PORT=8000
+          APP_NAME=Enterprise RAG API
+          DEBUG=false
+          DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/enterprise_rag_test
+          QDRANT_URL=http://localhost:6333
+          REDIS_URL=redis://localhost:6379/0
+          ADMIN_SECRET=super-secret-admin-token
+          OPENAI_API_KEY=not-used
+          LLM_MODEL=llama3.2
+          EOF
+
+      - name: Wait for Qdrant
+        run: |
+          for i in {1..30}; do
+            curl -sf http://localhost:6333/ && break
+            echo "Waiting for Qdrant... ($i)"
+            sleep 2
+          done
+
+      - name: Run unit tests
+        run: python -m pytest tests/test_health.py tests/test_tenants.py -v
+
+      - name: Run integration tests
+        run: python -m pytest tests/test_tenant_integration.py -v
+
+      - name: Run RAG pipeline tests
+        run: python -m pytest tests/test_rag_pipeline.py -v
+
+      - name: Run full test suite with coverage
+        run: python -m pytest tests/ -v --cov=app --cov-report=term-missing --cov-fail-under=70
