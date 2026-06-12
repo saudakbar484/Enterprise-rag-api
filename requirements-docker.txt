@@ -8,7 +8,6 @@ python-dotenv
 bcrypt
 passlib
 qdrant-client
-sentence-transformers
 tiktoken
 celery
 redis
@@ -20,3 +19,4 @@ ollama
 pytest
 pytest-asyncio
 pytest-mock
+numpy
