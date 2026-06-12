@@ -20,3 +20,8 @@ pytest
 pytest-asyncio
 pytest-mock
 numpy
+transformers
+tokenizers
+huggingface-hub
+tqdm
+Pillow
