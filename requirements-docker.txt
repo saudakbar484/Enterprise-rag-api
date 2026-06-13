@@ -25,3 +25,4 @@ tokenizers
 huggingface-hub
 tqdm
 Pillow
+scikit-learn
