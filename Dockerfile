@@ -16,8 +16,8 @@ COPY requirements-docker.txt .
 # Step 1 — Install CPU-only torch first
 RUN pip install --upgrade pip && \
     pip install --prefix=/install --no-cache-dir \
-        torch==2.2.2+cpu \
-        torchvision==0.17.2+cpu \
+        torch==2.4.0+cpu \
+        torchvision==0.19.0+cpu \
         --index-url https://download.pytorch.org/whl/cpu
 
 # Step 2 — Install sentence-transformers without letting it pull torch again
